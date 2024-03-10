@@ -51,6 +51,8 @@ contract MainSwapper {
      * @param amountIn - The amount of token0 to be swapped for the max amount of token1.
      */
     function swapOnce(address token0, address token1, uint256 amountIn) external {
+        if (token0 == address(0) || token1 == address(0)) revert InvalidPair();
+
         uint24 poolFee = _findOptimalRoute(token0, token1);
         TransferHelper.safeTransferFrom(
             token0,
@@ -84,8 +86,6 @@ contract MainSwapper {
         address token0,
         address token1
     ) private view returns (uint24) {
-        if (token0 == address(0) || token1 == address(0)) revert InvalidPair();
-
         (address uniV2Pool, uint256 token1SupplyV2) = _searchUniV2(token0, token1);
         (
             address uniV3Pool, 
@@ -102,8 +102,6 @@ contract MainSwapper {
             /// the pool version with the lowest fee tier.
             return (feeTier > 3000 ? feeTier :  0);
         else return feeTier;
-
-        return 0; 
     }
 
     /**
@@ -118,7 +116,7 @@ contract MainSwapper {
     function _searchUniV3(
         address token0,
         address token1
-    ) public view returns (address, uint256, uint24) {
+    ) private view returns (address, uint256, uint24) {
         /// @dev - Fee tiers for Uniswap V3 pools. 
         /// Used in conjunction with token addresses to identify pool. 
         uint16[4] memory uniV3FeeTiers = [10000, 3000, 500, 100]; // [1%, 0.3%, 0.05%, 0.01%]
